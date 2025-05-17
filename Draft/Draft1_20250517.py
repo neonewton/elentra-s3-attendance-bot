@@ -121,7 +121,7 @@ def main():
     print("✅ Chrome WebDriver started")
 
     try:
-        """
+        
     
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_url)
@@ -266,6 +266,7 @@ def main():
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]"
         ).click()
         time.sleep(time_sleep)
+        """
         """
         print("✅ Resource added successfully for⬇️")
         print("   LAMS Lesson Title : "+ monitor_title)

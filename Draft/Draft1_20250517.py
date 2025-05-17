@@ -158,7 +158,7 @@ def main():
         print("✅ Scrolled to bottom")
         time.sleep(time_sleep)
 
-        # 8) Click “No Time Frame”
+        # 8) Click “No Timeframe” << to change it when adding a new resource
         driver.find_element(By.XPATH,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a"
         ).click()

@@ -114,7 +114,7 @@ print(str3) #welcometopythonwelcometopythonwelcometopython
 
 #Slicing operator
 
-print(str1[1:3]) #print el meaning between 1 to 3
+print(str1[1:3]) #print el meaning between starting element 1 to the element before element 3 ***
 print(str1[:7]) #print welcome
 print(str1[0:]) #welcome
 print(str1[1:-1]) #elcom remove the last character of the string

@@ -90,22 +90,20 @@ def get_user_choices(
         root.destroy()
         sys.exit("❌ Operation cancelled by user")
 
-    frm = tk.Frame(dlg)
-    frm.grid(row=5, columnspan=2, pady=(0,10))
-    tk.Button(frm, text="OK",     width=10, command=on_ok).pack(side="left", padx=10)
-    tk.Button(frm, text="Cancel", width=10, command=on_cancel).pack(side="left")
+    btnf = tk.Frame(root)
+    btnf.grid(row=5, columnspan=2, pady=(0,10))
+    tk.Button(btnf, text="OK",     width=10, command=on_ok).pack(side="left", padx=8)
+    tk.Button(btnf, text="Cancel", width=10, command=on_cancel).pack(side="left", padx=8)
 
-    dlg.protocol("WM_DELETE_WINDOW", on_cancel)
+    # 5) Center the window on screen
+    root.update_idletasks()
+    w, h = root.winfo_width(), root.winfo_height()
+    x = (root.winfo_screenwidth()  - w) // 2
+    y = (root.winfo_screenheight() - h) // 2
+    root.geometry(f"{w}x{h}+{x}+{y}")
 
-    # center window
-    # dlg.update_idletasks()
-    # w, h = dlg.winfo_width(), dlg.winfo_height()
-    # x = (dlg.winfo_screenwidth() // 2) - (w // 2)
-    # y = (dlg.winfo_screenheight() // 2) - (h // 2)
-    # dlg.geometry(f"{w}x{h}+{x}+{y}")
-
-    dlg.wait_window()
-    root.destroy()
+    # 6) Run the form
+    root.mainloop()
 
     return (
         result["event_id"],
@@ -139,8 +137,20 @@ def main():
     time_sleep = 0.5
 
     # 1) Request for inputs 
-    elentra_event_id, lams_lesson_id, lams_lesson_title, use_monitor, use_student = get_user_choices()
-    print("Choices:", elentra_event_id, lams_lesson_id, lams_lesson_title, use_monitor, use_student)
+    (
+      elentra_event_id,
+      lams_lesson_id,
+      lams_lesson_title,
+      use_monitor,
+      use_student
+    ) = get_user_choices()
+
+    print("Choices:",
+          elentra_event_id,
+          lams_lesson_id,
+          lams_lesson_title,
+          use_monitor,
+          use_student)
     print("✅ ID input")
 
     # 2) Build URLs & Title

@@ -513,12 +513,13 @@ def get_user_choices(
             ui_log_var.set(ui_log_var.get() + "   Elentra Event ID  : "+ elentra_event_id + "\n")
             ui_log_var.set(ui_log_var.get() + "   LAMS Lesson ID    : "+ lams_lesson_id + "\n")
             if use_monitor:
-                ui_log_var.set(ui_log_var.get() + "   LAMS Lesson Title : "+ lams_lesson_title + "\n")
+                ui_log_var.set(ui_log_var.get() + "   LAMS Lesson Title : "+ LAMS_Lesson_Title_2 + "\n")
                 ui_log_var.set(ui_log_var.get() + "   LAMS Monitor URL  : "+ lams_monitor_url + "\n")
+            
 
+            ui_log_var.set(ui_log_var.get() + "⏳ Inserting Student Title now ⏳" + "\n")
+            
 
-
-            print("⏳ Inserting Student Title now ⏳")
             #try
 
             # if use_student:
@@ -536,8 +537,6 @@ def get_user_choices(
                 ui_log_var.set(ui_log_var.get() + "   LAMS Student Title : "+ lams_student_title + "\n")
                 ui_log_var.set(ui_log_var.get() + "   LAMS Student URL  : "+ lams_student_url + "\n")
 
-                print("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
-                print("   LAMS Monitor URL   : "+ lams_monitor_url)
         except Exception as e:
                 ui_log_var.set(ui_log_var.get() + f"❌ Resource not added successfully:,{e}\n")
 

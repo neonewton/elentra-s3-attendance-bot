@@ -49,6 +49,7 @@ else:                      # Linux / macOS
     os.system("clear")
 
 import time
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -56,10 +57,14 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import TimeoutException
 
 from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 """
 
@@ -208,28 +213,34 @@ def wait_and_click(
     timeout: float = 10,
     highlight_fn=None,
     message: str = None,
-    sleep_after: float = 1
+    sleep_after: float = None
 ):
     """
-    Wait for element at `xpath` to be clickable (up to `timeout` seconds),
-    highlight it if `highlight_fn` is provided, click it,
-    then optionally print `message` and sleep for `sleep_after` seconds.
+    Wait up to `timeout` seconds for an element to be clickable,
+    optionally highlight it, click it, print `message`, sleep, and return the element.
+    If it never becomes clickable, logs an error and re-raises.
     """
-    el = WebDriverWait(driver, timeout).until(
-        EC.element_to_be_clickable((By.XPATH, xpath))
-    )
-    if highlight_fn:
-        highlight_fn(el)
-    el.click()
-    if message:
-        print(message)
-    if sleep_after:
-        time.sleep(sleep_after)
-    return el
+    try:
+        el = WebDriverWait(driver, timeout).until(
+            EC.element_to_be_clickable((By.XPATH, xpath))
+        )
+        if highlight_fn:
+            highlight_fn(el)
+        el.click()
+        if message:
+            print(message)
+        if sleep_after:
+            time.sleep(sleep_after)
+            # time sleep default is 1 second located at top of main function
+        return el
+
+    except TimeoutException:
+        logger.error("Element never became clickable: %s", xpath)
+        # re-raise so outer code can catch it if desired
+        raise
 
 #main function
 def main():
-    
 
     # 1) Request for inputs 
     (
@@ -281,7 +292,7 @@ def main():
     print("✅ Chrome WebDriver started")
     
     try:
-        
+        time sleep = 1
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_event_url)
         print("✅ Navigated to Elentra event page")

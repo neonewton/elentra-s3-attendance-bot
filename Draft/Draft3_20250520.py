@@ -1,22 +1,4 @@
 #!/usr/bin/env python3
-import sys
-import os
-os.system('clear')
-
-import PySimpleGUI as sg
-print("version:", sg.__version__, "from", sg.__file__)
-
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-
-print("PySimpleGUI:", sg, "version:", getattr(sg, "__version__", "unknown"))
-print("Loaded from:", sg.__file__)
 
 # Ensure you have started Chrome with:
 """
@@ -28,35 +10,111 @@ then
 
 curl http://127.0.0.1:9222/json
 """
+import sys
+import os
+os.system('clear')
+
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+
+os.environ["TK_SILENCE_DEPRECATION"] = "1"
+from tkinter import simpledialog
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+
+
 
 # Check which Python interpreter is in use
 print("Using Python executable:", sys.executable)
 
-def get_user_choices():
-    sg.theme("DarkBlue")
-    layout = [
-        [sg.Text("Elentra Event ID:"), sg.Input(key="event_id", size=(20,1))],
-        [sg.Text("LAMS Lesson ID:"),  sg.Input(key="lesson_id",size=(20,1))],
-        [sg.Text("lams_lesson_title"),    sg.Input(key="monitor_title",size=(40,1))],
-        [sg.Checkbox("Upload Monitor URL", default=True,  key="use_monitor")],
-        [sg.Checkbox("Upload Student URL", default=True,  key="use_student")],
-        [sg.Button("Run"), sg.Button("Cancel")]
-    ]
+print("⏳ Waiting for user input ⏳")
 
-    window = sg.Window("Resource Upload Options", layout)
-    event, values = window.read()
-    window.close()
+def get_user_choices(
+    event_default="1696",
+    lesson_default="37655",
+    lesson_title_default="(test)FM_MiniQuiz_WomanHealth_DDMMYY"
+):
+    # 1) Create the root window and show it immediately
+    root = tk.Tk()
+    root.title("Resource Upload Options")
+    root.resizable(False, False)
 
-    if event != "Run":
-        sys.exit("⚠️  Operation cancelled by user")
+    # 2) Variables
+    eid_var   = tk.StringVar(value=event_default)
+    lid_var   = tk.StringVar(value=lesson_default)
+    title_var = tk.StringVar(value=lesson_title_default)
+    mon_var   = tk.BooleanVar(value=True)
+    stu_var   = tk.BooleanVar(value=True)
+    result    = {}
+
+    # — variables
+    eid_var    = tk.StringVar(value=event_default)
+    lid_var    = tk.StringVar(value=lesson_default)
+    title_var  = tk.StringVar(value=lesson_title_default)
+    mon_var    = tk.BooleanVar(value=True)
+    stu_var    = tk.BooleanVar(value=True)
+    result     = {}
+
+    # 3) Layout
+    pad = dict(padx=8, pady=6)
+    tk.Label(root, text="Elentra Event ID:").grid( row=0, column=0, sticky="e", **pad)
+    tk.Entry(root, textvariable=eid_var, width=30) .grid( row=0, column=1,       **pad)
+
+    tk.Label(root, text="LAMS Lesson ID:").grid(  row=1, column=0, sticky="e", **pad)
+    tk.Entry(root, textvariable=lid_var, width=30) .grid( row=1, column=1,       **pad)
+
+    tk.Label(root, text="LAMS Lesson Title:").grid(row=2, column=0, sticky="e", **pad)
+    tk.Entry(root, textvariable=title_var, width=50).grid(row=2, column=1,       **pad)
+
+    tk.Checkbutton(root, text="Upload Monitor URL",  variable=mon_var).grid(row=3, columnspan=2, sticky="w", **pad)
+    tk.Checkbutton(root, text="Upload Student URL", variable=stu_var).grid(row=4, columnspan=2, sticky="w", **pad)
+
+    # — callbacks
+    def on_ok():
+        result.update({
+            "event_id":            eid_var.get().strip(),
+            "lesson_id":           lid_var.get().strip(),
+            "lams_lesson_title":   title_var.get().strip(),
+            "use_monitor":         mon_var.get(),
+            "use_student":         stu_var.get()
+        })
+        root.destroy()
+
+    def on_cancel():
+        root.destroy()
+        sys.exit("❌ Operation cancelled by user")
+
+    frm = tk.Frame(dlg)
+    frm.grid(row=5, columnspan=2, pady=(0,10))
+    tk.Button(frm, text="OK",     width=10, command=on_ok).pack(side="left", padx=10)
+    tk.Button(frm, text="Cancel", width=10, command=on_cancel).pack(side="left")
+
+    dlg.protocol("WM_DELETE_WINDOW", on_cancel)
+
+    # center window
+    # dlg.update_idletasks()
+    # w, h = dlg.winfo_width(), dlg.winfo_height()
+    # x = (dlg.winfo_screenwidth() // 2) - (w // 2)
+    # y = (dlg.winfo_screenheight() // 2) - (h // 2)
+    # dlg.geometry(f"{w}x{h}+{x}+{y}")
+
+    dlg.wait_window()
+    root.destroy()
 
     return (
-        values["event_id"].strip(),
-        values["lesson_id"].strip(),
-        values["monitor_title"].strip(),
-        values["use_monitor"],
-        values["use_student"]
+        result["event_id"],
+        result["lesson_id"],
+        result["lams_lesson_title"],
+        result["use_monitor"],
+        result["use_student"]
     )
+
 
 def dramatic_input(element, text, delay=0.01):
     """Type each character with a small pause to mimic a human."""
@@ -78,41 +136,23 @@ def highlight(el, duration=2, color='clear', border="4px solid red"):
     driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
 
 def main():
-    time_sleep = 1.5
+    time_sleep = 0.5
 
-    # 0) Single UI call 
-
-    (
-        elentra_event_id,
-        lams_lesson_id,
-        lams_lesson_title,
-        use_monitor,
-        use_student
-    ) = get_user_choices()
-
-
-
-    # 1) Fetch User choices for IDs
-    
-    elentra_event_id = get_user_choices("Enter Elentra event ID: ")
-    lams_lesson_id   = get_user_choices("Enter LAMS lesson ID: ")
-    monitor_title = get_user_choices("Enter Monitor title: ")
-                                     
-    
-
+    # 1) Request for inputs 
+    elentra_event_id, lams_lesson_id, lams_lesson_title, use_monitor, use_student = get_user_choices()
+    print("Choices:", elentra_event_id, lams_lesson_id, lams_lesson_title, use_monitor, use_student)
     print("✅ ID input")
 
     # 2) Build URLs & Title
     elentra_event_name = f"{elentra_event_id}"
     elentra_event_url   = f"https://ntu.elentra.cloud/events?id={elentra_event_id}"
     
-    lams_monitor_title = f"LAMS {lams_lesson_title} (Facilitator/CE)"
+    LAMS_Lesson_Title_2 = f"LAMS {lams_lesson_title} (Facilitator/CE)"
     lams_monitor_url   = f"https://ilams.lamsinternational.com/lams/monitoring/monitoring/monitorLesson.do?lessonID={lams_lesson_id}"
     
     lams_student_title = f"LAMS {lams_lesson_title}"
     lams_student_url   = f"https://ilams.lamsinternational.com/lams/home/learner.do?lessonID={lams_lesson_id}"
-    #print(lams_monitor_title)
-    #print(lams_student_title)
+    
 
     print("✅ URL input")
     
@@ -173,7 +213,7 @@ def main():
         print("✅ No Time Frame link clicked")
         time.sleep(time_sleep)
 
-        print("⏳ Inserting Monitor Title now ⏳")
+        print("⏳ Inserting LAMS Lesson Title now ⏳")
         
         # 9) Click “Add a Resource”
         btn = driver.find_element(By.XPATH,
@@ -245,7 +285,7 @@ def main():
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
         )
         highlight(title_input)
-        dramatic_input(title_input, lams_monitor_title)
+        dramatic_input(title_input, LAMS_Lesson_Title_2)
         time.sleep(time_sleep)
         
         # scroll instantly to the bottom
@@ -298,7 +338,7 @@ def main():
         print("   Elentra Lesson Title  : "+ elentra_event_name)
         print("   Elentra Event URL  : "+ elentra_event_url)
         
-        print("   LAMS Monitor Title : "+ lams_monitor_title)
+        print("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
         print("   LAMS Monitor URL   : "+ lams_monitor_url)
 
         #try

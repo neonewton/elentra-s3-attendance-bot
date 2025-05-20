@@ -89,7 +89,7 @@ print("Using Python executable:", sys.executable)
 print("⏳ Waiting for user input ⏳")
 
 # function for left to right typing animation
-def dramatic_input(element, text, delay=0.005):
+def dramatic_input(element, text, delay=0.001):
     """Type each character with a small pause to mimic a human."""
     for ch in text:
         element.send_keys(ch)
@@ -329,8 +329,6 @@ def main():
             sleep_after=time_sleep
         )
 
-        print("⏳ Inserting LAMS Lesson Title now ⏳")
-
         # 9) Add a Resource
         wait_and_click(
             driver,
@@ -437,8 +435,8 @@ def main():
             dramatic_input(el, lams_monitor_url)
             print("✅ Monitor URL entered")
             time.sleep(time_sleep)
-
         # 13) Enter Lesson Title
+        print("⏳ Inserting LAMS title & URL now ⏳")
         el = WebDriverWait(driver, time_sleep).until(
             EC.visibility_of_element_located((By.XPATH,
                 "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
@@ -510,8 +508,8 @@ def main():
         print("   Elentra Lesson Title  : "+ elentra_event_name)
         print("   Elentra Event URL  : "+ elentra_event_url)
         if use_monitor:
-        print("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
-        print("   LAMS Monitor URL   : "+ lams_monitor_url)
+            print("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
+            print("   LAMS Monitor URL   : "+ lams_monitor_url)
 
         #try
 
@@ -526,10 +524,10 @@ def main():
         # dramatic_input(stu_input, student_url)
     
         print("⏳ Inserting Student Title now ⏳")
-        print("✅ Resource added successfully for⬇️")
+        
         if use_student:
-        print("   LAMS Student Title : "+ lams_student_title)
-        print("   LAMS Student URL   : "+ lams_student_url)
+            print("   LAMS Student Title : "+ lams_student_title)
+            print("   LAMS Student URL   : "+ lams_student_url)
 
     except Exception as e:
         print("❌ Resource not added successfully:", e)

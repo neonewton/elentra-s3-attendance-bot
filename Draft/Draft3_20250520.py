@@ -1,4 +1,26 @@
-#!/usr/bin/env python3
+# shift cmd P to select 3.13 !/usr/local/bin/python3
+# DO NOT USE !/usr/bin/env python3
+
+r""""
+python3 -V to check version
+
+pip3 install --upgrade pip
+pip3 install --upgrade selenium
+pip3 install --upgrade tk
+
+python3 - << 'EOF'
+import sys, tkinter
+print("Python executable:", sys.executable)
+print("Tk version:", tkinter.TkVersion)
+print("Tcl patchlevel:", tkinter.Tcl().eval('info patchlevel'))
+EOF
+
+should see: 
+Python executable: /Library/Frameworks/Python.framework/Versions/3.11/bin/python3
+Tk version: 8.6
+Tcl patchlevel: 8.6.13
+"""
+
 
 # Ensure you have started Chrome with:
 
@@ -35,7 +57,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-os.environ["TK_SILENCE_DEPRECATION"] = "1"
+# os.environ["TK_SILENCE_DEPRECATION"] = "1"
 from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox

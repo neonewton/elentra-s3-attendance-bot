@@ -55,6 +55,7 @@ set1={"a", "b", "C"}
 set2={1,2,3}
 set1.update (set2)
 """
+"""
 #Dictionary 
 
 mydict={10,20,30}
@@ -67,10 +68,11 @@ mydic={
 }
 
 for i in mydic:
-print(1) # prints only keys from dictionary
+print(i) # prints only keys from dictionary
 
 for i in mydic:
 print(mydic[i]) # prints only values from dictionary
+"""
 
 """
 

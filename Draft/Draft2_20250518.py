@@ -55,16 +55,24 @@ def main():
     """
     elentra_event_id = "1696"
     lams_lesson_id = "37655"
-    monitor_title = "(test)FM_MiniQuiz_WomanHealth_DDMMYY"
+    lams_lesson_title = "(test)FM_MiniQuiz_WomanHealth_DDMMYY"
     
     print("✅ ID input")
 
     # 2) Build URLs & Title
-    elentra_url   = f"https://ntu.elentra.cloud/events?id={elentra_event_id}"
-    monitor_url   = f"https://ilams.lamsinternational.com/lams/monitoring/monitoring/monitorLesson.do?lessonID={lams_lesson_id}"
+    elentra_event_name = f"{elentra_event_id}"
+    elentra_event_url   = f"https://ntu.elentra.cloud/events?id={elentra_event_id}"
     
-    print("✅ URL input")
+    lams_monitor_title = f"LAMS {lams_lesson_title} (Facilitator/CE)"
+    lams_monitor_url   = f"https://ilams.lamsinternational.com/lams/monitoring/monitoring/monitorLesson.do?lessonID={lams_lesson_id}"
+    
+    lams_student_title = f"LAMS {lams_lesson_title}"
+    lams_student_url   = f"https://ilams.lamsinternational.com/lams/home/learner.do?lessonID={lams_lesson_id}"
+    #print(lams_monitor_title)
+    #print(lams_student_title)
 
+    print("✅ URL input")
+    
     # 3) Setup Chrome WebDriver to attach to existing debug session
     chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
     service = Service(executable_path=chrome_driver_path)
@@ -75,10 +83,11 @@ def main():
     global driver
     driver = webdriver.Chrome(service=service, options=options)
     print("✅ Chrome WebDriver started")
-
+    
     try:
+        
         # 4) Navigate to Elentra Event Page
-        driver.get(elentra_url)
+        driver.get(elentra_event_url)
         print("✅ Navigated to Elentra event page")
         time.sleep(time_sleep)
 
@@ -121,6 +130,8 @@ def main():
         print("✅ No Time Frame link clicked")
         time.sleep(time_sleep)
 
+        print("⏳ Inserting Monitor Title now ⏳")
+        
         # 9) Click “Add a Resource”
         btn = driver.find_element(By.XPATH,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/div[1]/a"
@@ -182,7 +193,7 @@ def main():
         )
         highlight(url_input)
         url_input.clear()
-        dramatic_input(url_input, monitor_url)
+        dramatic_input(url_input, lams_monitor_url)
         time.sleep(time_sleep)
 
         # 13) Enter Lesson Title
@@ -190,7 +201,7 @@ def main():
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
         )
         highlight(title_input)
-        dramatic_input(title_input, monitor_title)
+        dramatic_input(title_input, lams_monitor_title)
         time.sleep(time_sleep)
         
         # scroll instantly to the bottom
@@ -217,7 +228,7 @@ def main():
             editor_body.send_keys(Keys.COMMAND + "a", Keys.DELETE)
 
         # 4) Type your new description
-        dramatic_input(editor_body, monitor_title)
+        dramatic_input(editor_body, lams_lesson_title)
 
         # 5) Switch back to the main document
         driver.switch_to.default_content()
@@ -238,12 +249,19 @@ def main():
         highlight(btn)
         btn.click()
         time.sleep(time_sleep)
-
+        
         print("✅ Resource added successfully for⬇️")
-        print("   LAMS Lesson Title : "+ monitor_title)
-        print("   Elentra Event URL : "+ elentra_url)
-        print("   LAMS Student URL  : "+ "WIP")  
-        print("   LAMS Monitor URL  : "+ monitor_url)
+        print("   Elentra Lesson Title  : "+ elentra_event_name)
+        print("   Elentra Event URL  : "+ elentra_event_url)
+        
+        print("   LAMS Monitor Title : "+ lams_monitor_title)
+        print("   LAMS Monitor URL   : "+ lams_monitor_url)
+
+        #try
+        print("⏳ Inserting Student Title now ⏳")
+        print("✅ Resource added successfully for⬇️")
+        print("   LAMS Student Title : "+ lams_student_title)
+        print("   LAMS Student URL   : "+ lams_student_url)
 
     except Exception as e:
         print("❌ Resource not added successfully:", e)

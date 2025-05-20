@@ -210,10 +210,10 @@ def get_user_choices(
 def wait_and_click(
     driver,
     xpath: str,
-    timeout: float = 10,
-    highlight_fn=None,
-    message: str = None,
-    sleep_after: float = None
+    timeout: float, #declared in main
+    highlight_fn,
+    message: str,
+    sleep_after: float #declared in main
 ):
     """
     Wait up to `timeout` seconds for an element to be clickable,
@@ -231,7 +231,7 @@ def wait_and_click(
             print(message)
         if sleep_after:
             time.sleep(sleep_after)
-            # time sleep default is 1 second located at top of main function
+            # time sleep default is 0.5 second located at top of main function
         return el
 
     except TimeoutException:
@@ -275,203 +275,241 @@ def main():
     # 3) Setup Chrome WebDriver to attach to existing debug session
     #macos-----
     chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
-    #macos------
-
     #windows-----
-    # # chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
-    #windows-----
+    # chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
 
     service = Service(executable_path=chrome_driver_path)
-
     options = Options()
     options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-
     global driver
     driver = webdriver.Chrome(service=service, options=options)
-    
     print("✅ Chrome WebDriver started")
     
     try:
-        time sleep = 1
+        time_sleep = 0.5 # wait x seconds between actions
+        time_out = 10 #wait up to x seconds for element to be clickable
+
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_event_url)
         print("✅ Navigated to Elentra event page")
         time.sleep(time_sleep)
 
-        # 5) Wait for the Administrator checkbox link to be clickable, then click
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[2]/div[2]/div[3]/div[2]/ul/li[2]/a/span"
+        # 5) Administrator checkbox
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[2]/div[2]/div[3]/div[2]/ul/li[2]/a/span",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Administrator checkbox clicked",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH,
-                "/html/body/div[1]/div/div[2]/div[2]/div[3]/div[2]/ul/li[2]/a/span"
-            ))
-        ).click()
-        print("✅ Administrator checkbox clicked")
 
-        # 6) Click “Content”
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[2]/ul/li[2]/a"
+        # 6) Content tab
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[2]/ul/li[2]/a",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Content link clicked",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH,
-                "/html/body/div[1]/div/div[3]/div/div[2]/ul/li[2]/a"
-            ))
-        ).click()
-        print("✅ Content link clicked")
-        time.sleep(time_sleep)
 
         # 7) Scroll down
-        time.sleep(time_sleep)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         print("✅ Scrolled to bottom")
         time.sleep(time_sleep)
-        r"""
-        # 8) Click “No Timeframe”
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a"
+
+        # 8) No Time Frame
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ No Time Frame link clicked",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        print("✅ No Time Frame link clicked")
-        time.sleep(time_sleep)
-        """        
+
         print("⏳ Inserting LAMS Lesson Title now ⏳")
-        
-        # 9) Click “Add a Resource”
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/div[1]/a"
-        )
-        highlight(btn)
-        btn.click()
-        print("✅ Add a Resource link clicked")
-        time.sleep(time_sleep)
 
-        # 10) Select “Link” checkbox
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div/label[6]"
+        # 9) Add a Resource
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/div[1]/a",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Add a Resource link clicked",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        r"""
-        WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.XPATH,
-                "insert link checkbox xpath here"
-            ))
-        ).click()
-        """
-        print("✅ Link checkbox selected")
-        time.sleep(time_sleep)
 
-        # 11) Three “Next Step” clicks with intermediate checkboxes
-        # → Next (then “Optional”)
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]"
+        # 10) 'Link' Resource checkbox
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div/label[6]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Link checkbox selected",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/label[1]"
-        )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
 
-        # → Next (then “Hide this resource”)
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]"
+        # 11) Parameters:
+        # Next Step
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            sleep_after=time_sleep
+        ) 
+        # Optional 
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/label[1]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Optional selected",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/label[2]"
+        # No Timeframe
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[2]/label[4]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ No Timeframe link clicked",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
         
-        # → Final Next
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]"
+        # Next Step
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Next step (to Hide)",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
-        
+        # No, this resource is accessible any time
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/label[1]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Next step (to Hide)",
+            sleep_after=time_sleep
+        )
+        # Hide this resource from learners.
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/label[2]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Hide this resource selected",
+            sleep_after=time_sleep
+        )
+        # Published
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[4]/label[1]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Hide this resource selected",
+            sleep_after=time_sleep
+        )
+        # Next Step
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Final Next",
+            sleep_after=time_sleep
+        )
+
         # 12) Enter Monitor URL
         if use_monitor:
-            url_input = driver.find_element(By.XPATH,
-                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[2]/div/input"
+            el = WebDriverWait(driver, time_sleep).until(
+                EC.visibility_of_element_located((By.XPATH,
+                    "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[2]/div/input"
+                ))
             )
-            highlight(url_input)
-            url_input.clear()
-            dramatic_input(url_input, lams_monitor_url)
+            highlight(el)
+            el.clear()
+            dramatic_input(el, lams_monitor_url)
+            print("✅ Monitor URL entered")
             time.sleep(time_sleep)
 
-        # 13) Enter Lesson Title   
-        title_input = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
+        # 13) Enter Lesson Title
+        el = WebDriverWait(driver, time_sleep).until(
+            EC.visibility_of_element_located((By.XPATH,
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
+            ))
         )
-        highlight(title_input)
-        title_input.clear()
-        dramatic_input(title_input, LAMS_Lesson_Title_2)
+        highlight(el)
+        el.clear()
+        dramatic_input(el, LAMS_Lesson_Title_2)
+        print("✅ Title entered")
         time.sleep(time_sleep)
-        
-        # scroll instantly to the bottom
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-        # 14) Enter Lesson Description
-        # 1) Locate the editor iframe and switch into it
-        
+        # 14.1) Scroll the message box to the bottom
+        modal = WebDriverWait(driver, time_out).until(
+            EC.presence_of_element_located((By.ID, "event-resource-modal"))
+        )
+        highlight(modal)
+        driver.execute_script(
+            "arguments[0].scrollTop = arguments[0].scrollHeight;",
+            modal
+        )
+        print("✅ Modal scrolled to bottom")
+        time.sleep(time_sleep)
+
+        # 14.2) Enter Description
         iframe = driver.find_element(
             By.CSS_SELECTOR,
             "#cke_event-resource-link-description iframe.cke_wysiwyg_frame"
         )
         driver.switch_to.frame(iframe)
-        
         print("✅ Switched to iframe")
-        # 2) Now target the editable <body> inside the iframe
+
         editor_body = driver.find_element(
             By.CSS_SELECTOR,
             "body[contenteditable='true']"
         )
         highlight(editor_body)
-        # 3) Clear any existing content
         try:
             editor_body.clear()
         except:
             editor_body.send_keys(Keys.COMMAND + "a", Keys.DELETE)
 
-        # 4) Type your new description
         dramatic_input(editor_body, LAMS_Lesson_Title_2)
-
-        # 5) Switch back to the main document
         driver.switch_to.default_content()
         print("✅ Description added")
+        time.sleep(time_sleep)
 
         # 15) Save Resource
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]"
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Resource saved",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
-        
-        # 16) Close or Attach another Resource
-        btn = driver.find_element(By.XPATH,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]"
+
+        # 16) Close dialog
+        wait_and_click(
+            driver,
+            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]",
+            timeout=time_out,
+            highlight_fn=highlight,
+            message="✅ Closed attachment dialog",
+            sleep_after=time_sleep
         )
-        highlight(btn)
-        btn.click()
-        time.sleep(time_sleep)
-        
-        print("✅ Resource added successfully for⬇️")
+
+        # Final summary
+        print("✅ Resource added successfully for ⬇️")
         print("   Elentra Lesson Title  : "+ elentra_event_name)
         print("   Elentra Event URL  : "+ elentra_event_url)
-        
+        if use_monitor:
         print("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
         print("   LAMS Monitor URL   : "+ lams_monitor_url)
 
@@ -486,9 +524,10 @@ def main():
         # stu_input = driver.find_element(By.XPATH, STUDENT_URL_XPATH)
         # stu_input.clear()
         # dramatic_input(stu_input, student_url)
-
+    
         print("⏳ Inserting Student Title now ⏳")
         print("✅ Resource added successfully for⬇️")
+        if use_student:
         print("   LAMS Student Title : "+ lams_student_title)
         print("   LAMS Student URL   : "+ lams_student_url)
 

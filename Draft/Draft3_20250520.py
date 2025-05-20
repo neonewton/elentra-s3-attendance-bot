@@ -49,7 +49,7 @@ else:                      # Linux / macOS
     os.system("clear")
 
 import time
-import logging
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -63,6 +63,7 @@ from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
+import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -89,14 +90,14 @@ print("Using Python executable:", sys.executable)
 print("⏳ Waiting for user input ⏳")
 
 # function for left to right typing animation
-def dramatic_input(element, text, delay=0.001):
+def dramatic_input(element, text, delay=0.05):
     """Type each character with a small pause to mimic a human."""
     for ch in text:
         element.send_keys(ch)
         time.sleep(delay)
 
 # function for highlight element in red
-def highlight(el, duration=2, color='clear', border="4px solid red"):
+def highlight(el, highlight_duration:float, color='clear', border="4px solid red"):
     # 1) Scroll the element into view
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
     # 2) Save its current style so we can restore later
@@ -105,7 +106,7 @@ def highlight(el, duration=2, color='clear', border="4px solid red"):
     highlight_style = f"background: {color} !important; border: {border} !important; {original_style}"
     driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, highlight_style)
     # 4) Pause so you can actually *see* it
-    time.sleep(duration)
+    time.sleep(highlight_duration) #declared in main
     # 5) Restore original style
     driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
 
@@ -120,7 +121,7 @@ def get_user_choices(
     # 1) Create the root window and show it immediately
     root = tk.Tk()
     root.title("Resource Upload Options")
-    root.resizable(False, False)
+    root.resizable(True, True)
     root.minsize(700, 300)
 
     # Make column 0 (labels) fixed size, column 1 (entries) stretchy
@@ -142,7 +143,7 @@ def get_user_choices(
     mon_var    = tk.BooleanVar(value=True)
     stu_var    = tk.BooleanVar(value=True)
     result     = {}
-
+    
     # 3) Layout
     pad = dict(padx=8, pady=6)
     tk.Label(root, text="Elentra Event ID:")\
@@ -165,9 +166,28 @@ def get_user_choices(
         .grid(row=3, columnspan=2, sticky="w", **pad)
     tk.Checkbutton(root, text="Upload Student URL", variable=stu_var)\
         .grid(row=4, columnspan=2, sticky="w", **pad)
+    
+    log_var = tk.StringVar(value="")
+    global ui_log_var
+    ui_log_var = log_var
+
+    tk.Label(root, textvariable=log_var,
+             justify="left", anchor="nw",
+             relief="sunken", height=6)\
+      .grid(row=5, column=0, columnspan=2,
+            sticky="nsew", padx=8, pady=(0,4))
+    root.grid_rowconfigure(5, weight=1)
+
+    # then push your OK/Cancel into row 6:
+    btnf = tk.Frame(root)
+    btnf.grid(row=6, column=0, columnspan=2, sticky="s", pady=8)
 
     # — callbacks
     def on_ok():
+        # if they somehow turned **both** off, force them back on:
+        if not (mon_var.get() or stu_var.get()):
+            mon_var.set(True)
+            stu_var.set(True)
         result.update({
             "event_id":            eid_var.get().strip(),
             "lesson_id":           lid_var.get().strip(),
@@ -179,8 +199,10 @@ def get_user_choices(
 
     def on_cancel():
         root.destroy()
+        print("❌ Operation cancelled by user")
         sys.exit("❌ Operation cancelled by user")
     
+
     # Now give *row 5* weight so it expands to fill all extra vertical space
     root.grid_rowconfigure(5, weight=1)
     # Create your button‐frame in row 5, sticky south
@@ -229,14 +251,13 @@ def wait_and_click(
         el.click()
         if message:
             print(message)
+            ui_log_var.set(ui_log_var.get() + message + "\n")
         if sleep_after:
-            time.sleep(sleep_after)
-            # time sleep default is 0.5 second located at top of main function
+            time.sleep(sleep_after) # time sleep declared in main
         return el
 
     except TimeoutException:
-        logger.error("Element never became clickable: %s", xpath)
-        # re-raise so outer code can catch it if desired
+        logger.error("Element never became clickable: %s", xpath) # re-raise so outer code can catch it if desired
         raise
 
 #main function
@@ -288,6 +309,7 @@ def main():
     try:
         time_sleep = 0.5 # wait x seconds between actions
         time_out = 10 #wait up to x seconds for element to be clickable
+        highlight_duration = 0.5 # wait x seconds to red border the element
 
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_event_url)

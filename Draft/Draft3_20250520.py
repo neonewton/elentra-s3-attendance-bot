@@ -57,7 +57,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
-# os.environ["TK_SILENCE_DEPRECATION"] = "1"
 from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox
@@ -83,6 +82,30 @@ print("Attached to browser:", driver.title, driver.current_url)
 print("Using Python executable:", sys.executable)
 
 print("⏳ Waiting for user input ⏳")
+
+# function for left to right typing animation
+def dramatic_input(element, text, delay=0.005):
+    """Type each character with a small pause to mimic a human."""
+    for ch in text:
+        element.send_keys(ch)
+        time.sleep(delay)
+
+# function for highlight element in red
+def highlight(el, duration=2, color='clear', border="4px solid red"):
+    # 1) Scroll the element into view
+    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
+    # 2) Save its current style so we can restore later
+    original_style = el.get_attribute("style") or ""
+    # 3) Overwrite with our highlight style
+    highlight_style = f"background: {color} !important; border: {border} !important; {original_style}"
+    driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, highlight_style)
+    # 4) Pause so you can actually *see* it
+    time.sleep(duration)
+    # 5) Restore original style
+    driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
+
+
+# function for UI message box and to get user input
 
 def get_user_choices(
     event_default="1696",
@@ -178,28 +201,35 @@ def get_user_choices(
         result["use_monitor"],
         result["use_student"]
     )
+# function for Wait until clickable
+def wait_and_click(
+    driver,
+    xpath: str,
+    timeout: float = 10,
+    highlight_fn=None,
+    message: str = None,
+    sleep_after: float = 1
+):
+    """
+    Wait for element at `xpath` to be clickable (up to `timeout` seconds),
+    highlight it if `highlight_fn` is provided, click it,
+    then optionally print `message` and sleep for `sleep_after` seconds.
+    """
+    el = WebDriverWait(driver, timeout).until(
+        EC.element_to_be_clickable((By.XPATH, xpath))
+    )
+    if highlight_fn:
+        highlight_fn(el)
+    el.click()
+    if message:
+        print(message)
+    if sleep_after:
+        time.sleep(sleep_after)
+    return el
 
-def dramatic_input(element, text, delay=0.005):
-    """Type each character with a small pause to mimic a human."""
-    for ch in text:
-        element.send_keys(ch)
-        time.sleep(delay)
-
-def highlight(el, duration=2, color='clear', border="4px solid red"):
-    # 1) Scroll the element into view
-    driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
-    # 2) Save its current style so we can restore later
-    original_style = el.get_attribute("style") or ""
-    # 3) Overwrite with our highlight style
-    highlight_style = f"background: {color} !important; border: {border} !important; {original_style}"
-    driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, highlight_style)
-    # 4) Pause so you can actually *see* it
-    time.sleep(duration)
-    # 5) Restore original style
-    driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
-
+#main function
 def main():
-    time_sleep = 0.25
+    
 
     # 1) Request for inputs 
     (
@@ -283,10 +313,11 @@ def main():
         time.sleep(time_sleep)
 
         # 7) Scroll down
+        time.sleep(time_sleep)
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
         print("✅ Scrolled to bottom")
         time.sleep(time_sleep)
-
+        r"""
         # 8) Click “No Timeframe”
         btn = driver.find_element(By.XPATH,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a"
@@ -295,7 +326,7 @@ def main():
         btn.click()
         print("✅ No Time Frame link clicked")
         time.sleep(time_sleep)
-
+        """        
         print("⏳ Inserting LAMS Lesson Title now ⏳")
         
         # 9) Click “Add a Resource”
@@ -312,7 +343,13 @@ def main():
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div/label[6]"
         )
         highlight(btn)
-        btn.click()
+        r"""
+        WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH,
+                "insert link checkbox xpath here"
+            ))
+        ).click()
+        """
         print("✅ Link checkbox selected")
         time.sleep(time_sleep)
 

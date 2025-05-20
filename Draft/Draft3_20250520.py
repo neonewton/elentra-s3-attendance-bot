@@ -1,26 +1,30 @@
 #!/usr/bin/env python3
 
 # Ensure you have started Chrome with:
-"""
+
+r"""
+MAC:
 open -a "Google Chrome" --args \
   --remote-debugging-port=9222 \
   --user-data-dir="$HOME/chrome-debug-profile"
-
 then
-
 curl http://127.0.0.1:9222/json
 
 WINDOWS:
 & 'C:\Program Files\Google\Chrome\Application\chrome.exe' `
   --remote-debugging-port=9222 `
   --user-data-dir="C:\Users\Neone\chrome-debug-profile"
-
+then
 curl http://127.0.0.1:9222/json
 
 """
+
 import sys
 import os
-os.system('clear')
+if os.name == "nt":        # Windows
+    os.system("cls")
+else:                      # Linux / macOS
+    os.system("clear")
 
 import time
 from selenium import webdriver
@@ -36,10 +40,26 @@ from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 
+"""
 
+# 1) Path to your matching ChromeDriver
+chrome_driver_path = r"C:\\Users\\Neone\\Driver\\chromedriver.exe"  
+service = Service(chrome_driver_path)
 
+# 2) Tell Selenium to hook into the existing Chrome debug port
+options = Options()
+options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
+
+# 3) Create the driver (this will *not* open a new browser window)
+driver = webdriver.Chrome(service=service, options=options)
+
+# 4) Confirm it s attached by printing the current title and URL
+print("Attached to browser:", driver.title, driver.current_url)
+
+"""
 # Check which Python interpreter is in use
 print("Using Python executable:", sys.executable)
+
 
 print("⏳ Waiting for user input ⏳")
 

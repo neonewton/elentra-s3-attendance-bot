@@ -82,7 +82,6 @@ print("Attached to browser:", driver.title, driver.current_url)
 # Check which Python interpreter is in use
 print("Using Python executable:", sys.executable)
 
-
 print("⏳ Waiting for user input ⏳")
 
 def get_user_choices(
@@ -94,6 +93,11 @@ def get_user_choices(
     root = tk.Tk()
     root.title("Resource Upload Options")
     root.resizable(False, False)
+    root.minsize(700, 300)
+
+    # Make column 0 (labels) fixed size, column 1 (entries) stretchy
+    root.grid_columnconfigure(0, weight=0)
+    root.grid_columnconfigure(1, weight=1)
 
     # 2) Variables
     eid_var   = tk.StringVar(value=event_default)
@@ -113,17 +117,26 @@ def get_user_choices(
 
     # 3) Layout
     pad = dict(padx=8, pady=6)
-    tk.Label(root, text="Elentra Event ID:").grid( row=0, column=0, sticky="e", **pad)
-    tk.Entry(root, textvariable=eid_var, width=30) .grid( row=0, column=1,       **pad)
+    tk.Label(root, text="Elentra Event ID:")\
+        .grid(row=0, column=0, sticky="w", **pad)
+    # NOTE: sticky="ew" here so this Entry will stretch to fill column 1
+    tk.Entry(root, textvariable=eid_var)\
+        .grid(row=0, column=1, sticky="ew", **pad)
 
-    tk.Label(root, text="LAMS Lesson ID:").grid(  row=1, column=0, sticky="e", **pad)
-    tk.Entry(root, textvariable=lid_var, width=30) .grid( row=1, column=1,       **pad)
+    tk.Label(root, text="LAMS Lesson ID:")\
+        .grid(row=1, column=0, sticky="w", **pad)
+    tk.Entry(root, textvariable=lid_var)\
+        .grid(row=1, column=1, sticky="ew", **pad)
 
-    tk.Label(root, text="LAMS Lesson Title:").grid(row=2, column=0, sticky="e", **pad)
-    tk.Entry(root, textvariable=title_var, width=50).grid(row=2, column=1,       **pad)
+    tk.Label(root, text="LAMS Lesson Title:")\
+        .grid(row=2, column=0, sticky="w", **pad)
+    tk.Entry(root, textvariable=title_var)\
+        .grid(row=2, column=1, sticky="ew", **pad)
 
-    tk.Checkbutton(root, text="Upload Monitor URL",  variable=mon_var).grid(row=3, columnspan=2, sticky="w", **pad)
-    tk.Checkbutton(root, text="Upload Student URL", variable=stu_var).grid(row=4, columnspan=2, sticky="w", **pad)
+    tk.Checkbutton(root, text="Upload Monitor URL",  variable=mon_var)\
+        .grid(row=3, columnspan=2, sticky="w", **pad)
+    tk.Checkbutton(root, text="Upload Student URL", variable=stu_var)\
+        .grid(row=4, columnspan=2, sticky="w", **pad)
 
     # — callbacks
     def on_ok():
@@ -139,9 +152,12 @@ def get_user_choices(
     def on_cancel():
         root.destroy()
         sys.exit("❌ Operation cancelled by user")
-
+    
+    # Now give *row 5* weight so it expands to fill all extra vertical space
+    root.grid_rowconfigure(5, weight=1)
+    # Create your button‐frame in row 5, sticky south
     btnf = tk.Frame(root)
-    btnf.grid(row=5, columnspan=2, pady=(0,10))
+    btnf.grid(row=5, column=0, columnspan=2, sticky="s", pady=(0,10))
     tk.Button(btnf, text="OK",     width=10, command=on_ok).pack(side="left", padx=8)
     tk.Button(btnf, text="Cancel", width=10, command=on_cancel).pack(side="left", padx=8)
 
@@ -163,8 +179,7 @@ def get_user_choices(
         result["use_student"]
     )
 
-
-def dramatic_input(element, text, delay=0.01):
+def dramatic_input(element, text, delay=0.005):
     """Type each character with a small pause to mimic a human."""
     for ch in text:
         element.send_keys(ch)
@@ -184,7 +199,7 @@ def highlight(el, duration=2, color='clear', border="4px solid red"):
     driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
 
 def main():
-    time_sleep = 0.5
+    time_sleep = 0.25
 
     # 1) Request for inputs 
     (
@@ -217,10 +232,14 @@ def main():
     print("✅ URL input")
     
     # 3) Setup Chrome WebDriver to attach to existing debug session
-    #macos
-    # chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
-    #windows
-    chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
+    #macos-----
+    chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
+    #macos------
+
+    #windows-----
+    # # chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
+    #windows-----
+
     service = Service(executable_path=chrome_driver_path)
 
     options = Options()
@@ -228,6 +247,7 @@ def main():
 
     global driver
     driver = webdriver.Chrome(service=service, options=options)
+    
     print("✅ Chrome WebDriver started")
     
     try:
@@ -324,7 +344,7 @@ def main():
         highlight(btn)
         btn.click()
         time.sleep(time_sleep)
-
+        
         # → Final Next
         btn = driver.find_element(By.XPATH,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]"
@@ -332,7 +352,7 @@ def main():
         highlight(btn)
         btn.click()
         time.sleep(time_sleep)
-
+        
         # 12) Enter Monitor URL
         if use_monitor:
             url_input = driver.find_element(By.XPATH,
@@ -343,11 +363,12 @@ def main():
             dramatic_input(url_input, lams_monitor_url)
             time.sleep(time_sleep)
 
-        # 13) Enter Lesson Title
+        # 13) Enter Lesson Title   
         title_input = driver.find_element(By.XPATH,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
         )
         highlight(title_input)
+        title_input.clear()
         dramatic_input(title_input, LAMS_Lesson_Title_2)
         time.sleep(time_sleep)
         
@@ -356,18 +377,20 @@ def main():
 
         # 14) Enter Lesson Description
         # 1) Locate the editor iframe and switch into it
+        
         iframe = driver.find_element(
             By.CSS_SELECTOR,
             "#cke_event-resource-link-description iframe.cke_wysiwyg_frame"
         )
         driver.switch_to.frame(iframe)
-
+        
+        print("✅ Switched to iframe")
         # 2) Now target the editable <body> inside the iframe
         editor_body = driver.find_element(
             By.CSS_SELECTOR,
             "body[contenteditable='true']"
         )
-
+        highlight(editor_body)
         # 3) Clear any existing content
         try:
             editor_body.clear()
@@ -375,7 +398,7 @@ def main():
             editor_body.send_keys(Keys.COMMAND + "a", Keys.DELETE)
 
         # 4) Type your new description
-        dramatic_input(editor_body, lams_lesson_title)
+        dramatic_input(editor_body, LAMS_Lesson_Title_2)
 
         # 5) Switch back to the main document
         driver.switch_to.default_content()

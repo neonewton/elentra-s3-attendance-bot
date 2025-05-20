@@ -9,6 +9,14 @@ open -a "Google Chrome" --args \
 then
 
 curl http://127.0.0.1:9222/json
+
+WINDOWS:
+& 'C:\Program Files\Google\Chrome\Application\chrome.exe' `
+  --remote-debugging-port=9222 `
+  --user-data-dir="C:\Users\Neone\chrome-debug-profile"
+
+curl http://127.0.0.1:9222/json
+
 """
 import sys
 import os
@@ -167,7 +175,10 @@ def main():
     print("✅ URL input")
     
     # 3) Setup Chrome WebDriver to attach to existing debug session
-    chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
+    #macos
+    # chrome_driver_path = "/Users/neltontan/Driver/chromedriver-mac-arm64/chromedriver"
+    #windows
+    chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
     service = Service(executable_path=chrome_driver_path)
 
     options = Options()

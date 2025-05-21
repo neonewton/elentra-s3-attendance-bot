@@ -113,17 +113,9 @@ def highlight(el, highlight_duration:float =0.5, color='clear', border="4px soli
     driver.execute_script("arguments[0].setAttribute('style', arguments[1]);", el, original_style)
 
 # function for Wait until clickable
-def wait_and_click(
-    driver,
-    xpath,
-    timeout, 
-    highlight_fn,
-    message,
-    sleep_after 
-):
+def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
     """
-    Wait up to `timeout` seconds for an element to be clickable,
-    optionally highlight it, click it, print `message`, sleep, and return the element.
+    Wait up to `timeout` seconds for an element to be clickable, optionally highlight it, click it, print `message`, sleep, and return the element.
     If it never becomes clickable, logs an error and re-raises.
     """
     global ui_log_var, ui_root
@@ -149,9 +141,22 @@ def wait_and_click(
 
 #main function
 def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
-    time_sleep = 0.1 # wait x seconds between actions
+    start_time = time.time()
+    time_sleep = 0 # wait x seconds between actions
     time_out = 10 #wait up to x seconds for element to be clickable
     
+    # 0) sanity check: must have at least one checkbox checked
+    if not (use_mon or use_stu):
+        messagebox.showerror(
+            "Selection error",
+            "Please select at least one of:\n  • Upload Monitor URL\n  • Upload Student URL"
+        )
+        # re-enable all inputs so the user can fix them
+        for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
+            w.config(state="normal")
+        return            
+     
+
     # 1) Request for inputs 
     elentra_event_id   = event_id
     lams_lesson_id     = lesson_id
@@ -159,12 +164,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     use_monitor        = use_mon
     use_student        = use_stu
 
-    print("Choices:",
-        elentra_event_id,
-        lams_lesson_id,
-        lams_lesson_title,
-        use_monitor,
-        use_student)
+    print("Choices:", elentra_event_id, lams_lesson_id,lams_lesson_title, use_monitor, use_student)
     print("✅ ID input")
 
     # 2) Build URLs & Title
@@ -176,8 +176,6 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     
     lams_student_title = f"LAMS {lams_lesson_title}"
     lams_student_url   = f"https://ilams.lamsinternational.com/lams/home/learner.do?lessonID={lams_lesson_id}"
-    
-
     print("✅ URL input")
     
     # 3) Setup Chrome WebDriver to attach to existing debug session
@@ -186,15 +184,14 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     #windows-----
     # chrome_driver_path = "C:\WebDrivers\chromedriver-win64\chromedriver.exe"
 
+    global driver
     service = Service(executable_path=chrome_driver_path)
     options = Options()
     options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
-    global driver
     driver = webdriver.Chrome(service=service, options=options)
     print("✅ Chrome WebDriver started")
     
     try:
-
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_event_url)
         ui_log_var.set(ui_log_var.get() + "✅ Navigated to Elentra event page\n")
@@ -220,10 +217,11 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
 
-        # 7) Scroll down
-        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        print("✅ Scrolled to bottom")
-        time.sleep(time_sleep)
+        # 7) Scroll down page
+        if True: #to group the lines of code
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            print("✅ Scrolled to bottom")
+            time.sleep(time_sleep)
 
         # 8) No Time Frame
         wait_and_click(
@@ -255,8 +253,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
 
-        # 11) Parameters:
-        # Next Step
+        # 11) Next Step
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -265,7 +262,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Next Step Button clicked",
             sleep_after=time_sleep
         ) 
-        # Optional 
+        
+        # 12) Optional 
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/label[1]",
@@ -274,7 +272,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Optional selected",
             sleep_after=time_sleep
         )
-        # No Timeframe
+        
+        # 13) No Timeframe
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[2]/label[4]",
@@ -284,7 +283,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
         
-        # Next Step
+        # 14) Next Step
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -293,7 +292,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Next step (to Hide)",
             sleep_after=time_sleep
         )
-        # No, this resource is accessible any time
+        
+        # 15) No, this resource is accessible any time
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/label[1]",
@@ -302,7 +302,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ No, this resource is accessible any time selected",
             sleep_after=time_sleep
         )
-        # Hide this resource from learners
+        
+        # 16) Hide this resource from learners
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/label[2]",
@@ -311,7 +312,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Hide this resource selected",
             sleep_after=time_sleep
         )
-        # Published
+        
+        # 17) Published
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[4]/label[1]",
@@ -320,7 +322,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Puyblished selected",
             sleep_after=time_sleep
         )
-        # Next Step
+        
+        # 18) Next Step
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -329,8 +332,9 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Final Next Step clicked",
             sleep_after=time_sleep
         )
+        
         print("⏳ Inserting LAMS title & URL now ⏳")
-        # 12) Enter Monitor URL
+        # 19) Enter Monitor URL
         if use_monitor:
             time.sleep(1)
             el = WebDriverWait(driver, time_sleep).until(
@@ -340,58 +344,64 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             )
             highlight(el)
             el.clear()
-            dramatic_input(el, lams_monitor_url)
+            el.send_keys(lams_monitor_url)
+            #dramatic_input(el, lams_monitor_url)
             print("✅ Monitor URL entered")
             time.sleep(time_sleep)
-        # 13) Enter Lesson Title
         
-        el = WebDriverWait(driver, time_sleep).until(
-            EC.visibility_of_element_located((By.XPATH,
-                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
-            ))
-        )
-        highlight(el)
-        el.clear()
-        dramatic_input(el, LAMS_Lesson_Title_2)
-        print("✅ Title entered")
-        time.sleep(time_sleep)
+        # 20) Enter Lesson Title
+        if True: #to group the lines of code
+            el = WebDriverWait(driver, time_sleep).until(
+                EC.visibility_of_element_located((By.XPATH,
+                    "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[3]/div/input"
+                ))
+            )
+            highlight(el)
+            el.clear()
+            el.send_keys(LAMS_Lesson_Title_2)
+            #dramatic_input(el, LAMS_Lesson_Title_2)
+            print("✅ Title entered")
+            time.sleep(time_sleep)
 
-        # 14.1) Scroll the message box to the bottom
-        modal = WebDriverWait(driver, time_out).until(
-            EC.presence_of_element_located((By.ID, "event-resource-modal"))
-        )
-        highlight(modal)
-        driver.execute_script(
-            "arguments[0].scrollTop = arguments[0].scrollHeight;",
-            modal
-        )
-        print("✅ Modal scrolled to bottom")
-        time.sleep(time_sleep)
+        # 21) Scroll the message box to the bottom
+        if True: #to group the lines of code
+            modal = WebDriverWait(driver, time_out).until(
+                EC.presence_of_element_located((By.ID, "event-resource-modal"))
+            )
+            highlight(modal)
+            driver.execute_script(
+                "arguments[0].scrollTop = arguments[0].scrollHeight;",
+                modal
+            )
+            print("✅ Modal scrolled to bottom")
+            time.sleep(time_sleep)
+            time.sleep(1)
+        # 22) Enter Description
+        if True: #to group the lines of code
+            iframe = driver.find_element(
+                By.CSS_SELECTOR,
+                "#cke_event-resource-link-description iframe.cke_wysiwyg_frame"
+            )
+            driver.switch_to.frame(iframe)
+            print("✅ Switched to iframe")
 
-        # 14.2) Enter Description
-        iframe = driver.find_element(
-            By.CSS_SELECTOR,
-            "#cke_event-resource-link-description iframe.cke_wysiwyg_frame"
-        )
-        driver.switch_to.frame(iframe)
-        print("✅ Switched to iframe")
+            editor_body = driver.find_element(
+                By.CSS_SELECTOR,
+                "body[contenteditable='true']"
+            )
+            highlight(editor_body)
+            try:
+                editor_body.clear()
+            except:
+                editor_body.send_keys(Keys.COMMAND + "a", Keys.DELETE)
+            
+            editor_body.send_keys(LAMS_Lesson_Title_2)
+            #dramatic_input(editor_body, LAMS_Lesson_Title_2)
+            driver.switch_to.default_content()
+            print("✅ Description added")
+            time.sleep(time_sleep)
 
-        editor_body = driver.find_element(
-            By.CSS_SELECTOR,
-            "body[contenteditable='true']"
-        )
-        highlight(editor_body)
-        try:
-            editor_body.clear()
-        except:
-            editor_body.send_keys(Keys.COMMAND + "a", Keys.DELETE)
-
-        dramatic_input(editor_body, LAMS_Lesson_Title_2)
-        driver.switch_to.default_content()
-        print("✅ Description added")
-        time.sleep(time_sleep)
-
-        # 15) Save Resource
+        # 23) Save Resource
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -401,7 +411,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
 
-        # 16) Close dialog
+        # 24) Close dialog
         wait_and_click(
             driver,
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]",
@@ -410,6 +420,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             message="✅ Closed attachment dialog",
             sleep_after=time_sleep
         )
+        
         # Final summary
         print("✅ Resource added successfully")
         ui_log_var.set(ui_log_var.get() + "🎉 Resource added successfully for ⬇️\n")
@@ -450,13 +461,16 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             ui_log_var.set(ui_log_var.get() + f"❌ Resource not added successfully:,{e}\n")
 
     finally:
-            driver.quit()
+            # driver.quit()
+            elapsed = time.time() - start_time
+            for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
+                w.config(state="normal")
 
 # function for UI message box and to get user input
 def get_user_choices(
     event_default="1696",
     lesson_default="37655",
-    lesson_title_default="(test)FM_MiniQuiz_WomanHealth_DDMMYY"
+    lesson_title_default="(RPA test)FM_MiniQuiz_WomanHealth_DDMMYY"
 ):
     # 1) Create the ui_root window and show it immediately
     global ui_log_var, ui_root
@@ -470,6 +484,7 @@ def get_user_choices(
     ui_root.grid_columnconfigure(1, weight=1)
 
     # 2) Variables
+    global eid_var, lid_var, title_var, mon_var, stu_var    
     eid_var   = tk.StringVar(value=event_default)
     lid_var   = tk.StringVar(value=lesson_default)
     title_var = tk.StringVar(value=lesson_title_default)
@@ -477,15 +492,19 @@ def get_user_choices(
     stu_var   = tk.BooleanVar(value=True)
 
     # 3) layout inputs
+    global eid_entry, lid_entry, title_entry, mon_chk, stu_chk
     pad = dict(padx=8, pady=6)
     tk.Label(ui_root, text="Elentra Event ID:").grid(row=0, column=0, **pad)
-    eid_entry = tk.Entry(ui_root, textvariable=eid_var);     eid_entry.grid(row=0, column=1, **pad)
+    eid_entry = tk.Entry(ui_root, textvariable=eid_var);     
+    eid_entry.grid(row=0, column=1, sticky="ew", **pad)
 
     tk.Label(ui_root, text="LAMS Lesson ID:").grid(row=1, column=0, **pad)
-    lid_entry = tk.Entry(ui_root, textvariable=lid_var);     lid_entry.grid(row=1, column=1, **pad)
+    lid_entry = tk.Entry(ui_root, textvariable=lid_var);     
+    lid_entry.grid(row=1, column=1, sticky="ew", **pad)
 
     tk.Label(ui_root, text="LAMS Lesson Title:").grid(row=2, column=0, **pad)
-    title_entry = tk.Entry(ui_root, textvariable=title_var); title_entry.grid(row=2, column=1, **pad)
+    title_entry = tk.Entry(ui_root, textvariable=title_var); 
+    title_entry.grid(row=2, column=1, sticky="ew", **pad)
 
     # **Assign** your checkbuttons to variables:
     mon_chk = tk.Checkbutton(ui_root, text="Upload Monitor URL",  variable=mon_var)
@@ -498,9 +517,7 @@ def get_user_choices(
     log_var = tk.StringVar(value="")  
     ui_log_var = log_var
 
-    tk.Label(ui_root, textvariable=log_var,
-             justify="left", anchor="nw",
-             relief="sunken", height=8)\
+    tk.Label(ui_root, textvariable = log_var, justify="left", anchor="nw", relief="sunken", height=8)\
       .grid(row=5, column=0, columnspan=2,
             sticky="nsew", padx=8, pady=(0,4))
     # keep it stretchy…
@@ -512,15 +529,10 @@ def get_user_choices(
 
     # — when OK is pressed, disable inputs, queue the automation, but do NOT destroy
     def on_ok():
-        # enforce at least one box checked
-        if not (mon_var.get() or stu_var.get()):
-            mon_var.set(True)
-            stu_var.set(True)
-
         # disable *all* your inputs:
         for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
-            w.config(state="disabled")
-
+            w.config(state="disabled") 
+        
         ui_log_var.set("🏁 Starting Clifford Bot…\n")
         ui_root.after(100, lambda: run_automation(
             eid_var.get().strip(),
@@ -536,6 +548,7 @@ def get_user_choices(
         sys.exit("❌ Operation cancelled by user")
     
     # 5) buttons: OK kicks off automation, Close actually destroys the window
+    global ok_btn, close_btn
     btnf = tk.Frame(ui_root)
     btnf.grid(row=6, column=0, columnspan=2, pady=8, sticky="s")
     ok_btn    = tk.Button(btnf, text="OK",    width=10, command=on_ok) 

@@ -92,6 +92,13 @@ print("Attached to browser:", driver.title, driver.current_url)
 print("Using Python executable:", sys.executable)
 print("⏳ Waiting for user input ⏳")
 
+def ui_log(message: str):
+    """Append `message` + newline to the ScrolledText, keeping it read-only."""
+    log_widget.config(state="normal")
+    log_widget.insert("end", message + "\n")
+    log_widget.see("end")
+    log_widget.config(state="disabled")
+
 # function for left to right typing animation
 def dramatic_input(element, text, delay=1):
     """Type each character with a small pause to mimic a human."""
@@ -128,9 +135,11 @@ def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
             highlight_fn(el)
         el.click()
         if message:
-            ui_log_var.set(ui_log_var.get() + message + "\n")
+            ui_log(message)
+            # print(message)
+            # ui_log_var.set(ui_log_var.get() + message + "\n")
             ui_root.update() #better ui_root.update_idletasks()
-            print(message)
+            
         if sleep_after:
             time.sleep(sleep_after) # time sleep declared in main
         return el
@@ -507,26 +516,30 @@ def get_user_choices(
     stu_chk.grid(row=4, columnspan=2, sticky="w", **pad)
 
     # 4) log area
-    log_var = tk.StringVar(value="")  
-    ui_log_var = log_var
-
+    # log_var = tk.StringVar(value="")  
+    # ui_log_var = log_var
     # tk.Label(ui_root, textvariable = log_var, justify="left", anchor="nw", relief="sunken", height=8)\
     #   .grid(row=5, column=0, columnspan=2,
     #         sticky="nsew", padx=8, pady=(0,4))
-    # # … instead of a Label, create a ScrolledText …
-    log_widget = ScrolledText( ui_root,
-        wrap="word",     # wrap long lines
-        height=10        # start with about 10 text lines visible
-    )
-    log_widget.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=8, pady=(0,4)
-    )
     # make sure it expands when the window is resized
-    ui_root.grid_rowconfigure(5, weight=1)
-    ui_root.grid_columnconfigure(1, weight=1)
+    # ui_root.grid_rowconfigure(5, weight=1)
     # # enforce at least 200px of height for the log area
     # ui_root.grid_rowconfigure(5, minsize=200)
     # # enforce at least 700px of width on column 1 (your entry/log column)
     # ui_root.grid_columnconfigure(1, minsize=700)   
+
+    # 4) replace Label+StringVar with a ScrolledText
+    global log_widget
+    log_widget = ScrolledText(
+        ui_root,
+        wrap="word",     # wrap long lines
+        height=10,       # show 10 lines by default
+        state="disabled" # start read-only
+    )
+    log_widget.grid( row=5, column=0, columnspan=2, sticky="nsew", padx=8, pady=(0,4)
+    )
+    ui_root.grid_rowconfigure(5, weight=1)
+    ui_root.grid_columnconfigure(1, weight=1)
 
     # — when OK is pressed, disable inputs, queue the automation, but do NOT destroy
     def on_ok():

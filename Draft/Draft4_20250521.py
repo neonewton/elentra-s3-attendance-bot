@@ -137,7 +137,7 @@ def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
         if message:
             ui_log(message)
             # print(message)
-            # ui_log_var.set(ui_log_var.get() + message + "\n")
+            # ui_log(message + "\n")
             ui_root.update() #better ui_root.update_idletasks()
             
         if sleep_after:
@@ -192,7 +192,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     try:
         # 4) Navigate to Elentra Event Page
         driver.get(elentra_event_url)
-        ui_log_var.set(ui_log_var.get() + "✅ Navigated to Elentra event page\n")
+        ui_log("✅ Navigated to Elentra event page")
         time.sleep(time_sleep)
 
         # 5) Administrator checkbox
@@ -317,7 +317,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[4]/label[1]",
             timeout=time_out,
             highlight_fn=highlight,
-            message="✅ Puyblished selected",
+            message="✅ Published selected",
             sleep_after=time_sleep
         )
         
@@ -331,7 +331,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
         
-        print("⏳ Inserting LAMS title & URL now ⏳")
+        print("⏳ Inserting LAMS Monitor title & URL now ⏳")
+        ui_log("⏳ Inserting LAMS Monitor title & URL now ⏳")
         # 19) Enter Monitor URL
         if use_monitor:
             time.sleep(1)
@@ -421,21 +422,22 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
         )
         
         # Final summary
-        print("✅ Resource added successfully")
-        ui_log_var.set(ui_log_var.get() + "🎉 Resource added successfully for ⬇️\n")
+        print("🎉 Resource added successfully for ⬇️")
         print("   Elentra Event ID  : "+ elentra_event_id)
-        ui_log_var.set(ui_log_var.get() + "   Elentra Event ID  : "+ elentra_event_id + "\n")
         print("   Elentra Event URL : "+ elentra_event_url)
-        ui_log_var.set(ui_log_var.get() + "   LAMS Lesson ID    : "+ lams_lesson_id + "\n")
+        ui_log("🎉 Resource added successfully for ⬇️")
+        ui_log("   Elentra Event ID  : "+ elentra_event_id)
+        ui_log("   LAMS Lesson ID    : "+ lams_lesson_id)
+        
         
         if use_monitor:
-            print("   LAMS Monitor URL  : "+ LAMS_Lesson_Title_2)
-            ui_log_var.set(ui_log_var.get() + "   LAMS Lesson Title : "+ LAMS_Lesson_Title_2 + "\n")
+            print("   LAMS Lesson Title  : "+ LAMS_Lesson_Title_2)
             print("   LAMS Monitor URL  : "+ lams_monitor_url)
-            ui_log_var.set(ui_log_var.get() + "   LAMS Monitor URL  : "+ lams_monitor_url + "\n")
+            ui_log("   LAMS Lesson Title : "+ LAMS_Lesson_Title_2)
+            ui_log("   LAMS Monitor URL  : "+ lams_monitor_url)
         
         
-        ui_log_var.set(ui_log_var.get() + "⏳ Inserting Student Title now ⏳" + "\n")
+        ui_log("⏳ Inserting Student Title now ⏳")
         
         #try
 
@@ -452,19 +454,19 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
 
         if use_student:
             print("   LAMS Student Title : "+ lams_student_title)
-            ui_log_var.set(ui_log_var.get() + "   LAMS Student Title : "+ lams_student_title + "\n")
             print("   LAMS Student URL  : "+ lams_student_url)
-            ui_log_var.set(ui_log_var.get() + "   LAMS Student URL  : "+ lams_student_url + "\n")
+            ui_log("   LAMS Student Title : "+ lams_student_title)
+            ui_log("   LAMS Student URL  : "+ lams_student_url)
 
     except Exception as e:
             print("❌ Resource not added successfully:", e)
-            ui_log_var.set(ui_log_var.get() + f"❌ Resource not added successfully:,{e}\n")
+            ui_log(f"❌ Resource not added successfully:,{e}")
 
     finally:
             # driver.quit()
             elapsed = time.time() - start_time
             print(f"⏱ Total elapsed time: {elapsed:.1f} seconds")
-            ui_log_var.set(ui_log_var.get() + f"⏱ Total elapsed time: {elapsed:.1f} seconds\n")
+            ui_log(f"⏱ Total elapsed time: {elapsed:.1f} seconds")
             for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
                 w.config(state="normal")
 
@@ -570,7 +572,8 @@ def get_user_choices(
         for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
             w.config(state="disabled") 
         
-        ui_log_var.set("🏁 Starting Clifford Bot…\n")
+        ui_log("🏁 Starting Clifford Bot....")
+        # ui_log_var.set("🏁 Starting Clifford Bot…\n")
         ui_root.after(100, lambda: run_automation(
             eid_var.get().strip(),
             lid_var.get().strip(),

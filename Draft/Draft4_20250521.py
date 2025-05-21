@@ -23,7 +23,6 @@ Tcl patchlevel: 8.6.13
 """
 
 # Ensure you have started Chrome with:
-
 r"""
 MAC:
 open -a "Google Chrome" --args \
@@ -70,7 +69,6 @@ ui_log_var = None
 ui_root    = None
 
 """
-
 # 1) Path to your matching ChromeDriver
 chrome_driver_path = r"C:\\Users\\Neone\\Driver\\chromedriver.exe"  
 service = Service(chrome_driver_path)
@@ -90,6 +88,10 @@ print("Attached to browser:", driver.title, driver.current_url)
 print("Using Python executable:", sys.executable)
 print("⏳ Waiting for user input ⏳")
 
+time_sleep = 0 #1 sec or 0.05 sec # wait x seconds between actions, for presentation purposes
+time_out = 10 #wait up to x seconds for element to be clickable
+#highlight_duration = 0.05 set in def highlight ()
+
 def ui_log(message: str):
     """Append `message` + newline to the ScrolledText, keeping it read-only."""
     log_widget.config(state="normal")
@@ -104,8 +106,8 @@ def dramatic_input(element, text, delay=1):
         element.send_keys(ch)
         # time.sleep(delay)
 
-# function for highlight element in red
-def highlight(el, highlight_duration:float =0.5, color='clear', border="4px solid red"):
+# function for highlight element in red, for presentation purposes 1 sec or 0.1 sec, value to be lower than time_sleep
+def highlight(el, highlight_duration =0.1, color='clear', border="4px solid red"):
     # 1) Scroll the element into view
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", el)
     # 2) Save its current style so we can restore later
@@ -121,7 +123,7 @@ def highlight(el, highlight_duration:float =0.5, color='clear', border="4px soli
 # function for Wait until clickable
 def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
     """
-    Wait up to `timeout` seconds for an element to be clickable, optionally highlight it, click it, print `message`, sleep, and return the element.
+    Wait up to `timeout` seconds for an element to be clickable, highlight it, click it, print `message`, sleep, and return the element.
     If it never becomes clickable, logs an error and re-raises.
     """
     global ui_log_var, ui_root
@@ -134,8 +136,6 @@ def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
         el.click()
         if message:
             ui_log(message)
-            # print(message)
-            # ui_log(message + "\n")
             ui_root.update() #better ui_root.update_idletasks()
             
         if sleep_after:
@@ -149,12 +149,11 @@ def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
 
 #main function
 def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
-    start_time = time.time()
-    time_sleep = 0 # wait x seconds between actions
-    time_out = 10 #wait up to x seconds for element to be clickable      
+    start_time = time.time()  
      
     # 1) Request for inputs 
     elentra_event_id   = event_id
+    elentra_event_name = None
     lams_lesson_id     = lesson_id
     lams_lesson_title  = lesson_title
     use_monitor        = use_mon
@@ -162,17 +161,17 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
 
     #print("Choices:", elentra_event_id, lams_lesson_id,lams_lesson_title, use_monitor, use_student)
     print("✅ ID input")
+    ui_log("✅ ID input")
 
     # 2) Build URLs & Title
-    elentra_event_name = f"{elentra_event_id}"
     elentra_event_url   = f"https://ntu.elentra.cloud/events?id={elentra_event_id}"
-    
+    #elentra_event_name = f"Elentra {elentra_event_id}"
     lams_monitor_title = f"LAMS {lams_lesson_title} (Facilitator/CE)"
     lams_monitor_url   = f"https://ilams.lamsinternational.com/lams/monitoring/monitoring/monitorLesson.do?lessonID={lams_lesson_id}"
-    
     lams_student_title = f"LAMS {lams_lesson_title}"
     lams_student_url   = f"https://ilams.lamsinternational.com/lams/home/learner.do?lessonID={lams_lesson_id}"
     print("✅ URL input")
+    ui_log("✅ URL input")
     
     # 3) Setup Chrome WebDriver to attach to existing debug session
     #macos-----
@@ -186,11 +185,13 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
     driver = webdriver.Chrome(service=service, options=options)
     print("✅ Chrome WebDriver started")
+    ui_log("✅ Chrome WebDriver started")
     
     try:
         # 4) Navigate to Elentra Event Page
         if True: #to group the lines of code
             driver.get(elentra_event_url)
+            print("✅ Navigated to Elentra event page")
             ui_log("✅ Navigated to Elentra event page")
             time.sleep(time_sleep)
 
@@ -214,25 +215,38 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             sleep_after=time_sleep
         )
 
-        # 7) Scroll down page
+        # event name
         if True: #to group the lines of code
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            print("✅ Scrolled to bottom")
-            time.sleep(time_sleep)
-
-        # 8) No Time Frame
-        wait_and_click(
-            driver,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a",
-            timeout=time_out,
-            highlight_fn=highlight,
-            message="✅ No Time Frame link clicked",
-            sleep_after=time_sleep
-        )
+        # a) wait for the H1 to be present
+            h1 = WebDriverWait(driver, time_out).until(
+                EC.presence_of_element_located((By.XPATH, "/html/body/div[1]/div/div[3]/div/h1[1]"))
+            )
+            highlight(h1)
+            # b) extract its text
+            elentra_event_name = h1.text
+            print("✅ Page title is:", elentra_event_name)
+            ui_log("✅ Page title is: "+ elentra_event_name)
 
         ui_log("⏳ Inserting MONITOR URL⏳")
         print("⏳ Inserting MONITOR URL⏳")
         if use_monitor:
+            # 7) Scroll down page
+            if True: #to group the lines of code
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                print("✅ Scrolled to bottom")
+                ui_log("✅ Scrolled to bottom")
+                time.sleep(time_sleep)
+
+            # 8) No Time Frame
+            wait_and_click(
+                driver,
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a",
+                timeout=time_out,
+                highlight_fn=highlight,
+                message="✅ No Time Frame link clicked",
+                sleep_after=time_sleep
+            )
+            
             # 9) Add a Resource
             wait_and_click(
                 driver,
@@ -333,6 +347,16 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 sleep_after=time_sleep
             )
             
+            # 18.5) No, the proxy isnt required to be enabled selected
+            wait_and_click(
+                driver,
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/div/label[1]",
+                timeout=time_out,
+                highlight_fn=highlight,
+                message="✅ No, the proxy isnt required to be enabled selected",
+                sleep_after=time_sleep
+            )
+
             print("⏳ Inserting LAMS title & URL now ⏳")
             ui_log("⏳ Inserting LAMS title & URL now ⏳")
             
@@ -349,6 +373,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 el.send_keys(lams_monitor_url)
                 #dramatic_input(el, lams_monitor_url)
                 print("✅ Monitor URL entered")
+                ui_log("✅ Monitor URL entered")
                 time.sleep(time_sleep)
             
             #*** 20) Enter Lesson Title
@@ -363,6 +388,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 el.send_keys(lams_monitor_title)
                 #dramatic_input(el, LAMS_Lesson_Title_2)
                 print("✅ Title entered")
+                ui_log("✅ Title entered")
                 time.sleep(time_sleep)
 
             #*** 21) Scroll the message box to the bottom
@@ -376,10 +402,11 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                     modal
                 )
                 print("✅ Modal scrolled to bottom")
+                ui_log
                 time.sleep(time_sleep)
-                time.sleep(0.5)
-            
+                  
             #*** 22) Enter Description
+            time.sleep(0.5)
             if True: #to group the lines of code
                 iframe = driver.find_element(
                     By.CSS_SELECTOR,
@@ -387,6 +414,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 )
                 driver.switch_to.frame(iframe)
                 print("✅ Switched to iframe")
+                ui_log("✅ Switched to iframe")
 
                 editor_body = driver.find_element(
                     By.CSS_SELECTOR,
@@ -402,9 +430,12 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 #dramatic_input(editor_body, LAMS_Lesson_Title_2)
                 driver.switch_to.default_content()
                 print("✅ Description added")
+                ui_log("✅ Description added")
+
                 time.sleep(time_sleep)
 
             # 23) Save Resource
+            time.sleep(0.5)
             wait_and_click(
                 driver,
                 "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -415,18 +446,38 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             )
 
             # 24) Close
+            time.sleep(0.5)
             wait_and_click(
-            driver,
-            "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]",
-            timeout=time_out,
-            highlight_fn=highlight,
-            message="✅ Closed attachment dialog",
-            sleep_after=time_sleep
-        )
+                driver,
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]",
+                timeout=time_out,
+                highlight_fn=highlight,
+                message="✅ Closed attachment dialog",
+                sleep_after=time_sleep,
+                
+            )
         
         ui_log("⏳ Inserting STUDENT URL⏳")
         print("⏳ Inserting STUDENT URL⏳")
         if use_student:
+            # 7) Scroll down page
+            if True: #to group the lines of code
+                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                print("✅ Scrolled to bottom")
+                ui_log("✅ Scrolled to bottom")
+                time.sleep(time_sleep)
+
+            #  Nelton: cuz button grayout, so cannot click 
+            # # 8) No Time Frame
+            # wait_and_click(
+            #     driver,
+            #     "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a",
+            #     timeout=time_out,
+            #     highlight_fn=highlight,
+            #     message="✅ No Time Frame link clicked",
+            #     sleep_after=time_sleep
+            # )
+
             # 9) Add a Resource
             wait_and_click(
                 driver,
@@ -527,6 +578,16 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 sleep_after=time_sleep
             )
             
+            # 18.5) No, the proxy isnt required to be enabled selected
+            wait_and_click(
+                driver,
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[2]/form/div[2]/div[1]/div/label[1]",
+                timeout=time_out,
+                highlight_fn=highlight,
+                message="✅ No, the proxy isnt required to be enabled selected",
+                sleep_after=time_sleep
+            )
+            
             print("⏳ Inserting LAMS title & URL now ⏳")
             ui_log("⏳ Inserting LAMS title & URL now ⏳")
             
@@ -543,6 +604,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 el.send_keys(lams_student_url)
                 #dramatic_input(el, lams_monitor_url)
                 print("✅ Monitor URL entered")
+                ui_log("✅ Monitor URL entered")
                 time.sleep(time_sleep)
             
             #*** 20) Enter Lesson Title
@@ -570,10 +632,12 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                     modal
                 )
                 print("✅ Modal scrolled to bottom")
+                ui_log("✅ Modal scrolled to bottom")
                 time.sleep(time_sleep)
                 time.sleep(0.5)
             
             #*** 22) Enter Description
+            time.sleep(0.5)
             if True: #to group the lines of code
                 iframe = driver.find_element(
                     By.CSS_SELECTOR,
@@ -581,6 +645,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 )
                 driver.switch_to.frame(iframe)
                 print("✅ Switched to iframe")
+                ui_log("✅ Switched to iframe")
 
                 editor_body = driver.find_element(
                     By.CSS_SELECTOR,
@@ -596,9 +661,11 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
                 #dramatic_input(editor_body, LAMS_Lesson_Title_2)
                 driver.switch_to.default_content()
                 print("✅ Description added")
+                ui_log("✅ Description added")
                 time.sleep(time_sleep)
 
             # 23) Save Resource
+            time.sleep(0.5)
             wait_and_click(
                 driver,
                 "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[3]",
@@ -609,22 +676,23 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             )
 
             # 24) Close
+            time.sleep(0.5)
             wait_and_click(
                 driver,
-                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[3]/ul/li[4]/a",
+                "/html/body/div[1]/div/div[3]/div/div[7]/div[1]/div[6]/div/div/div/div[3]/button[1]",
                 timeout=time_out,
                 highlight_fn=highlight,
-                message="✅ No Time Frame link clicked",
+                message="✅ Closed attachment dialog",
                 sleep_after=time_sleep
             )
 
         # Final summary
         print("🎉 Resource added successfully for ⬇️")
-        print("   Elentra Event ID  : "+ elentra_event_id)
+        print("   Elentra Event Name: "+ elentra_event_name)
         print("   Elentra Event URL : "+ elentra_event_url)
 
         ui_log("🎉 Resource added successfully for ⬇️")
-        ui_log("   Elentra Event ID  : "+ elentra_event_id)
+        ui_log("   Elentra Event Name: "+ elentra_event_name)
         ui_log("   LAMS Lesson ID    : "+ lams_lesson_id)
         
         if use_monitor:
@@ -698,19 +766,6 @@ def get_user_choices(
     stu_chk = tk.Checkbutton(ui_root, text="Upload Student URL", variable=stu_var)
     stu_chk.grid(row=4, columnspan=2, sticky="w", **pad)
 
-    # 4) log area
-    # log_var = tk.StringVar(value="")  
-    # ui_log_var = log_var
-    # tk.Label(ui_root, textvariable = log_var, justify="left", anchor="nw", relief="sunken", height=8)\
-    #   .grid(row=5, column=0, columnspan=2,
-    #         sticky="nsew", padx=8, pady=(0,4))
-    # make sure it expands when the window is resized
-    # ui_root.grid_rowconfigure(5, weight=1)
-    # # enforce at least 200px of height for the log area
-    # ui_root.grid_rowconfigure(5, minsize=200)
-    # # enforce at least 700px of width on column 1 (your entry/log column)
-    # ui_root.grid_columnconfigure(1, minsize=700)   
-
     # 4) replace Label+StringVar with a ScrolledText
     global log_widget
     log_widget = ScrolledText(
@@ -753,7 +808,7 @@ def get_user_choices(
         for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
             w.config(state="disabled") 
         
-        ui_log("🏁 Starting Clifford Bot....")
+        ui_log("🏁 I want to end my work early....")
         # ui_log_var.set("🏁 Starting Clifford Bot…\n")
         ui_root.after(100, lambda: run_automation(
             eid_var.get().strip(),
@@ -784,8 +839,9 @@ def get_user_choices(
     x = (ui_root.winfo_screenwidth()  - w) // 2
     y = (ui_root.winfo_screenheight() - h) // 2
     ui_root.geometry(f"{w}x{h}+{x}+{y}")
-    
-    
+       
 if __name__ == "__main__":
     eid, lid, title, use_mon, use_stu = get_user_choices()
     run_automation(eid, lid, title, use_mon, use_stu)
+
+# last updated June 2025

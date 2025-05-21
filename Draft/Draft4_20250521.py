@@ -63,6 +63,7 @@ from selenium.common.exceptions import TimeoutException
 from tkinter import simpledialog
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+from tkinter.scrolledtext import ScrolledText
 
 import logging
 logging.basicConfig(level=logging.INFO)
@@ -143,20 +144,8 @@ def wait_and_click(driver, xpath, timeout, highlight_fn, message, sleep_after):
 def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     start_time = time.time()
     time_sleep = 0 # wait x seconds between actions
-    time_out = 10 #wait up to x seconds for element to be clickable
-    
-    # 0) sanity check: must have at least one checkbox checked
-    if not (use_mon or use_stu):
-        messagebox.showerror(
-            "Selection error",
-            "Please select at least one of:\n  • Upload Monitor URL\n  • Upload Student URL"
-        )
-        # re-enable all inputs so the user can fix them
-        for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
-            w.config(state="normal")
-        return            
+    time_out = 10 #wait up to x seconds for element to be clickable      
      
-
     # 1) Request for inputs 
     elentra_event_id   = event_id
     lams_lesson_id     = lesson_id
@@ -164,7 +153,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     use_monitor        = use_mon
     use_student        = use_stu
 
-    print("Choices:", elentra_event_id, lams_lesson_id,lams_lesson_title, use_monitor, use_student)
+    #print("Choices:", elentra_event_id, lams_lesson_id,lams_lesson_title, use_monitor, use_student)
     print("✅ ID input")
 
     # 2) Build URLs & Title
@@ -376,6 +365,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
             print("✅ Modal scrolled to bottom")
             time.sleep(time_sleep)
             time.sleep(1)
+        
         # 22) Enter Description
         if True: #to group the lines of code
             iframe = driver.find_element(
@@ -428,6 +418,7 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
         ui_log_var.set(ui_log_var.get() + "   Elentra Event ID  : "+ elentra_event_id + "\n")
         print("   Elentra Event URL : "+ elentra_event_url)
         ui_log_var.set(ui_log_var.get() + "   LAMS Lesson ID    : "+ lams_lesson_id + "\n")
+        
         if use_monitor:
             print("   LAMS Monitor URL  : "+ LAMS_Lesson_Title_2)
             ui_log_var.set(ui_log_var.get() + "   LAMS Lesson Title : "+ LAMS_Lesson_Title_2 + "\n")
@@ -463,6 +454,8 @@ def run_automation(event_id, lesson_id, lesson_title, use_mon, use_stu):
     finally:
             # driver.quit()
             elapsed = time.time() - start_time
+            print(f"⏱ Total elapsed time: {elapsed:.1f} seconds")
+            ui_log_var.set(ui_log_var.get() + f"⏱ Total elapsed time: {elapsed:.1f} seconds\n")
             for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
                 w.config(state="normal")
 
@@ -517,19 +510,50 @@ def get_user_choices(
     log_var = tk.StringVar(value="")  
     ui_log_var = log_var
 
-    tk.Label(ui_root, textvariable = log_var, justify="left", anchor="nw", relief="sunken", height=8)\
-      .grid(row=5, column=0, columnspan=2,
-            sticky="nsew", padx=8, pady=(0,4))
-    # keep it stretchy…
+    # tk.Label(ui_root, textvariable = log_var, justify="left", anchor="nw", relief="sunken", height=8)\
+    #   .grid(row=5, column=0, columnspan=2,
+    #         sticky="nsew", padx=8, pady=(0,4))
+    # # … instead of a Label, create a ScrolledText …
+    log_widget = ScrolledText( ui_root,
+        wrap="word",     # wrap long lines
+        height=10        # start with about 10 text lines visible
+    )
+    log_widget.grid(row=5, column=0, columnspan=2, sticky="nsew", padx=8, pady=(0,4)
+    )
+    # make sure it expands when the window is resized
     ui_root.grid_rowconfigure(5, weight=1)
-    # enforce at least 200px of height for the log area
-    ui_root.grid_rowconfigure(5, minsize=200)
-    # enforce at least 700px of width on column 1 (your entry/log column)
-    ui_root.grid_columnconfigure(1, minsize=700)   
+    ui_root.grid_columnconfigure(1, weight=1)
+    # # enforce at least 200px of height for the log area
+    # ui_root.grid_rowconfigure(5, minsize=200)
+    # # enforce at least 700px of width on column 1 (your entry/log column)
+    # ui_root.grid_columnconfigure(1, minsize=700)   
 
     # — when OK is pressed, disable inputs, queue the automation, but do NOT destroy
     def on_ok():
-        # disable *all* your inputs:
+        # 1) make sure at least one of the two URLs is requested
+        if not (mon_var.get() or stu_var.get()):
+            messagebox.showerror(
+            "Selection error",
+            "Please select at least one of:\n"
+            "  • Upload Monitor URL\n"
+            "  • Upload Student URL"
+            )
+            return
+
+    # 2) make sure none of the three text fields is blank
+        if not eid_var.get().strip() \
+        or not lid_var.get().strip() \
+        or not title_var.get().strip():
+            messagebox.showerror(
+                "Input error",
+                "Please fill in:\n"
+                "  • Elentra Event ID\n"
+                "  • LAMS Lesson ID\n"
+                "  • LAMS Lesson Title"
+            )
+            return
+
+    # 3) everything’s valid, so disable inputs and kick off the robot
         for w in (eid_entry, lid_entry, title_entry, mon_chk, stu_chk, ok_btn, close_btn):
             w.config(state="disabled") 
         
